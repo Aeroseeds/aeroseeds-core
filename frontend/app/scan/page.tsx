@@ -197,10 +197,7 @@ export default function ScanPage() {
                   <p className="result-label">Prevention</p>
                   <p className="result-text">{result.diagnosis.prevention || "Not available."}</p>
                 </div>
-                <Recommendations
-                  recommendations={result.diagnosis.recommendations}
-                  sources={result.diagnosis.sources}
-                />
+                <Recommendations recommendations={result.diagnosis.recommendations} />
               </div>
             </div>
           )}

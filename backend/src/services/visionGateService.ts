@@ -4,17 +4,20 @@ import { openRouterApiKey, openRouterVisionModels } from "../config";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const REQUEST_TIMEOUT_MS = 10000;
 
-export type ImageQualityVerdict = "USABLE" | "REJECT";
+export type ImageQualityVerdict = "USABLE" | "NOT_MAIZE" | "UNCLEAR";
 
 const GATE_PROMPT =
-  "Respond with one word: USABLE if this image shows a maize/corn plant or " +
-  "leaf in enough detail to attempt a diagnosis (even if not perfect), or " +
-  "REJECT only if it is clearly not maize, or so blurry/dark that nothing " +
-  "can be assessed. When unsure, answer USABLE.";
+  "Respond with exactly one word: USABLE if this image shows a maize/corn " +
+  "plant or leaf in enough detail to attempt a diagnosis (even if not " +
+  "perfect); NOT_MAIZE if it clearly shows a different crop, plant, or " +
+  "something unrelated to maize; UNCLEAR if it is too blurry, dark, or " +
+  "zoomed out for anything to be assessed. When unsure whether it is maize, " +
+  "answer USABLE.";
 
 function parseVerdict(text: string | undefined): ImageQualityVerdict {
   const normalized = (text || "").trim().toUpperCase();
-  if (normalized.includes("REJECT")) return "REJECT";
+  if (normalized.includes("NOT_MAIZE") || normalized.includes("NOT MAIZE")) return "NOT_MAIZE";
+  if (normalized.includes("UNCLEAR") || normalized.includes("REJECT")) return "UNCLEAR";
   if (normalized.includes("USABLE")) return "USABLE";
   throw new Error(`Unexpected vision gate response: "${normalized}"`);
 }
@@ -50,9 +53,9 @@ async function callModel(model: string, dataUrl: string): Promise<ImageQualityVe
 
 /**
  * Calls OpenRouter's vision models in fallback order to gate an uploaded
- * image before it is sent to the inference service. Returns "USABLE" or
- * "REJECT". Moves to the next model on error, timeout, or rate limit;
- * throws only if every model in the chain fails.
+ * image before it is sent to the inference service. Returns "USABLE",
+ * "NOT_MAIZE", or "UNCLEAR". Moves to the next model on error, timeout, or
+ * rate limit; throws only if every model in the chain fails.
  */
 export async function checkImageQuality(
   fileBuffer: Buffer,

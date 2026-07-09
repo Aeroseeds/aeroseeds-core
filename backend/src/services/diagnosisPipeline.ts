@@ -16,7 +16,9 @@ export interface Diagnosis {
 
 const UNCERTAIN_MESSAGE =
   "We couldn't confidently diagnose this one. Please consult a local agricultural extension officer.";
-const REJECTED_MESSAGE =
+const NOT_MAIZE_MESSAGE =
+  "This doesn't look like a maize plant. Please upload a photo of a maize/corn plant or leaf.";
+const UNCLEAR_MESSAGE =
   "Please upload a clearer close-up image of a maize plant.";
 
 export type PipelineResult =
@@ -41,8 +43,11 @@ export async function runDiagnosisPipeline(
     quality = "USABLE";
   }
 
-  if (quality === "REJECT") {
-    return { kind: "rejected", message: REJECTED_MESSAGE };
+  if (quality === "NOT_MAIZE") {
+    return { kind: "rejected", message: NOT_MAIZE_MESSAGE };
+  }
+  if (quality === "UNCLEAR") {
+    return { kind: "rejected", message: UNCLEAR_MESSAGE };
   }
 
   try {

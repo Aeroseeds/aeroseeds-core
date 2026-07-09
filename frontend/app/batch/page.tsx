@@ -436,7 +436,6 @@ export default function BatchPage() {
                     </div>
                     <Recommendations
                       recommendations={response.results[expandedIndex].diagnosis!.recommendations}
-                      sources={response.results[expandedIndex].diagnosis!.sources}
                     />
                   </div>
                 </div>
