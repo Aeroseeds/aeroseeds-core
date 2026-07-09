@@ -1,5 +1,10 @@
+interface Recommendation {
+  text: string;
+  buyUrl?: string;
+}
+
 interface RecommendationsProps {
-  recommendations?: string[];
+  recommendations?: Recommendation[];
 }
 
 // Fixed safety caveat, always shown alongside any product advice. Kept here
@@ -19,7 +24,19 @@ export default function Recommendations({
       <p className="result-label">What to use</p>
       <ul className="result-reco-list">
         {recommendations.map((rec, i) => (
-          <li key={i}>{rec}</li>
+          <li key={i}>
+            {rec.text}
+            {rec.buyUrl && (
+              <a
+                className="result-buy-link"
+                href={rec.buyUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Buy ↗
+              </a>
+            )}
+          </li>
         ))}
       </ul>
       <p className="result-caveat">{SAFETY_CAVEAT}</p>

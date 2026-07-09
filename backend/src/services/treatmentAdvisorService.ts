@@ -5,14 +5,13 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const REQUEST_TIMEOUT_MS = 25000;
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-export interface TreatmentSource {
-  title: string;
-  url: string;
+export interface Recommendation {
+  text: string;
+  buyUrl?: string;
 }
 
 export interface TreatmentAdvice {
-  recommendations: string[];
-  sources: TreatmentSource[];
+  recommendations: Recommendation[];
 }
 
 interface CacheEntry {
@@ -38,32 +37,40 @@ function buildPrompt(diseaseName: string, symptomsVisible: string): string {
     "not recommend any chemical that is banned or restricted in Nigeria.\n\n" +
     "Respond with 2 to 4 lines, one recommendation per line, each formatted " +
     "exactly as:\n" +
-    "- <active ingredient> (<example product name(s) sold in Nigeria>): " +
-    "<brief application note, e.g. timing or method>\n\n" +
-    "Where a cultural or biological control is the best first step, include it " +
-    "as one of the lines. Output only the list -- no heading, no preamble, and " +
-    "no disclaimer."
+    "<active ingredient> (<example product name(s) sold in Nigeria>): " +
+    "<brief application note, e.g. timing or method> || <manufacturer's " +
+    "official website or official product page URL, or leave blank if none " +
+    "is known>\n\n" +
+    "Where a cultural or biological control is the best first step, include " +
+    "it as one of the lines (leave the URL blank for that line). Output only " +
+    "the list -- no heading, no preamble, no disclaimer, no bullet " +
+    "characters or numbering, and no links, citations, or bracketed " +
+    "references anywhere except in the URL slot after \"||\"."
   );
 }
 
-function parseRecommendations(text: string | undefined): string[] {
+const MARKDOWN_LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+const BARE_URL_RE = /https?:\/\/\S+/g;
+
+function stripInlineLinks(text: string): string {
+  return text
+    .replace(MARKDOWN_LINK_RE, "$1")
+    .replace(BARE_URL_RE, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function parseRecommendations(text: string | undefined): Recommendation[] {
   return (text || "")
     .split(/\r?\n/)
     .map((line) => line.replace(/^\s*[-*•]\s*/, "").trim())
-    .filter((line) => line.length > 0);
-}
-
-function parseSources(annotations: any): TreatmentSource[] {
-  if (!Array.isArray(annotations)) return [];
-  const seen = new Set<string>();
-  const sources: TreatmentSource[] = [];
-  for (const a of annotations) {
-    const c = a?.url_citation;
-    if (!c?.url || seen.has(c.url)) continue;
-    seen.add(c.url);
-    sources.push({ title: c.title || c.url, url: c.url });
-  }
-  return sources;
+    .filter((line) => line.length > 0)
+    .map((line) => {
+      const [rawText, rawUrl] = line.split("||").map((part) => part.trim());
+      const recommendationText = stripInlineLinks(rawText || line);
+      const buyUrl = rawUrl && /^https?:\/\//i.test(rawUrl) ? rawUrl : undefined;
+      return buyUrl ? { text: recommendationText, buyUrl } : { text: recommendationText };
+    });
 }
 
 async function callModel(model: string, prompt: string): Promise<TreatmentAdvice> {
@@ -89,7 +96,7 @@ async function callModel(model: string, prompt: string): Promise<TreatmentAdvice
   if (recommendations.length === 0) {
     throw new Error("Model returned no usable recommendations.");
   }
-  return { recommendations, sources: parseSources(message?.annotations) };
+  return { recommendations };
 }
 
 async function fetchAdvice(

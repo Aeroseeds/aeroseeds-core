@@ -1,7 +1,7 @@
 import { diagnoseImage } from "./inferenceService";
 import { checkImageQuality } from "./visionGateService";
 import { crossExamineDiagnosis } from "./crossExamService";
-import { getTreatmentAdvice, TreatmentSource } from "./treatmentAdvisorService";
+import { getTreatmentAdvice, Recommendation } from "./treatmentAdvisorService";
 import { confidenceThreshold } from "../config";
 
 export interface Diagnosis {
@@ -10,8 +10,7 @@ export interface Diagnosis {
   symptoms?: string;
   treatment?: string;
   prevention?: string;
-  recommendations?: string[];
-  sources?: TreatmentSource[];
+  recommendations?: Recommendation[];
 }
 
 const UNCERTAIN_MESSAGE =
@@ -97,7 +96,6 @@ export async function runDiagnosisPipeline(
             result.symptoms || ""
           );
           diagnosis.recommendations = advice.recommendations;
-          diagnosis.sources = advice.sources;
         } catch (err: any) {
           console.error(
             "Treatment advisor failed, returning diagnosis without recommendations:",

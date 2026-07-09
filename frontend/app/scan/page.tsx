@@ -7,9 +7,9 @@ import Recommendations from "../Recommendations";
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
 
-interface TreatmentSource {
-  title: string;
-  url: string;
+interface Recommendation {
+  text: string;
+  buyUrl?: string;
 }
 
 interface Diagnosis {
@@ -18,8 +18,7 @@ interface Diagnosis {
   symptoms?: string;
   treatment?: string;
   prevention?: string;
-  recommendations?: string[];
-  sources?: TreatmentSource[];
+  recommendations?: Recommendation[];
 }
 
 interface DiagnoseResponse {
