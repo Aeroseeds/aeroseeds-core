@@ -1,0 +1,42 @@
+{
+  "Healthy": {
+    "disease_name": "Healthy",
+    "causal_agent": "None",
+    "symptoms_visible": "No visible disease symptoms. Normal green leaves, no streaking, lesions, or pustules.",
+    "immediate_treatment": "None needed. Continue regular monitoring.",
+    "prevention_next_season": "Maintain field hygiene, balanced fertilization, and regular inspection.",
+    "source_url": "https://plantwiseplusknowledgebank.org/"
+  },
+  "MSV": {
+    "disease_name": "Maize Streak Virus (MSV)",
+    "causal_agent": "A geminivirus (Maize streak virus / Maize streak mastrevirus), transmitted by leafhopper vectors. Not spread mechanically or through seed.",
+    "symptoms_visible": "Pale spots or flecks (0.5-2mm) appear on leaves 3-7 days after infection. In severe cases these develop into longer streaks that eventually merge. Plants infected before the 4-5 leaf stage can be severely stunted.",
+    "immediate_treatment": "There is no direct treatment for infected plants. Remove severely affected plants where practical. Consult your national pesticide guide for approved insecticides targeting the leafhopper vector.",
+    "prevention_next_season": "Avoid planting downwind of infected crops and manage rotation carefully. Clear old crop residue after harvest. Use MSV-resistant or tolerant maize varieties where available.",
+    "source_url": "https://plantwiseplusknowledgebank.org/doi/full/10.1079/pwkb.species.32620"
+  },
+  "MLB": {
+    "disease_name": "Maize Leaf Blight (Northern Corn Leaf Blight / Turcicum Leaf Blight)",
+    "causal_agent": "A fungus, Exserohilum turcicum (also called Setosphaeria turcica), which overwinters in old infected crop debris and spreads via wind- and rain-dispersed spores.",
+    "symptoms_visible": "Long, elliptical, cigar-shaped lesions, gray-green turning tan-brown, running parallel to the leaf margins, typically 2-30cm long. First symptoms usually appear around 14 days after infection.",
+    "immediate_treatment": "Apply an approved fungicide in severe cases. Remove and destroy heavily infected leaves and residue where practical.",
+    "prevention_next_season": "Rotate maize with a non-host crop. Destroy old maize residue after harvest. Use resistant hybrid varieties. Avoid dense planting.",
+    "source_url": "https://en.wikipedia.org/wiki/Northern_corn_leaf_blight"
+  },
+  "CommonRust": {
+    "disease_name": "Common Rust (Puccinia sorghi)",
+    "causal_agent": "A fungus, Puccinia sorghi, which needs a second host plant (Oxalis species, a common weed) to complete its full life cycle. Spores spread by wind between fields.",
+    "symptoms_visible": "Small golden-brown, circular to oval powdery pustules (1-2mm) on both leaf surfaces, roughly equal in number top and bottom. Pustules darken toward black later in the season. Often first appears after silking.",
+    "immediate_treatment": "Fungicide application can help in severe outbreaks, especially on susceptible varieties. Monitor from the whorl stage onward and treat once a large share of leaves show pustules.",
+    "prevention_next_season": "Use rust-resistant maize varieties -- this is the most effective control. Avoid planting fields with staggered maturity dates near each other. Control nearby Oxalis weeds where practical.",
+    "source_url": "https://plantwiseplusknowledgebank.org/doi/full/10.1079/pwkb.species.45872"
+  },
+  "GrayLeafSpot": {
+    "disease_name": "Gray Leaf Spot (Cercospora zeae-maydis / Cercospora zeina)",
+    "causal_agent": "A fungus (Cercospora zeae-maydis, or the related Cercospora zeina), which survives in old maize residue and spreads via rain-splashed spores onto lower leaves.",
+    "symptoms_visible": "Starts as small pinpoint spots with a yellow halo on lower leaves, best seen held up to light. Spots expand into narrow, rectangular, tan-to-gray lesions running parallel to leaf veins, which can merge and kill entire leaves in severe cases. Usually appears 2-3 weeks before tasseling.",
+    "immediate_treatment": "Fungicides applied just before tassel emergence can help where affordable. Consult local guidance on approved products.",
+    "prevention_next_season": "Destroy plant residue after harvest through deep plowing. Rotate with a non-host crop. Use more tolerant varieties where available. Widen plant spacing to improve airflow.",
+    "source_url": "https://plantwiseplusknowledgebank.org/doi/10.1079/pwkb.20167800007"
+  }
+}

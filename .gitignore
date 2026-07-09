@@ -1,0 +1,27 @@
+# Python
+inference-service/__pycache__/
+inference-service/**/__pycache__/
+inference-service/.venv/
+inference-service/venv/
+inference-service/model/maize_classifier.pth
+inference-service/model/convnext_tiny_best.pt
+inference-service/*.log
+
+# Node
+backend/node_modules/
+backend/dist/
+frontend/node_modules/
+frontend/.next/
+frontend/*.tsbuildinfo
+
+# Env files
+.env
+.env.local
+*.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code local runtime state
+.claude/scheduled_tasks.lock
