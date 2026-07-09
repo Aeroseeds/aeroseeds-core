@@ -93,7 +93,9 @@ export async function runDiagnosisPipeline(
           const advice = await getTreatmentAdvice(
             result.predicted_class,
             result.disease_name,
-            result.symptoms || ""
+            result.cause || "",
+            result.symptoms || "",
+            result.treatment || ""
           );
           diagnosis.recommendations = advice.recommendations;
         } catch (err: any) {

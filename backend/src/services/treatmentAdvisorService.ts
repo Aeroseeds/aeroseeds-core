@@ -26,17 +26,32 @@ interface CacheEntry {
 const cache = new Map<string, CacheEntry>();
 const pending = new Map<string, Promise<TreatmentAdvice>>();
 
-function buildPrompt(diseaseName: string, symptomsVisible: string): string {
+function buildPrompt(
+  diseaseName: string,
+  cause: string,
+  symptomsVisible: string,
+  treatmentNote: string
+): string {
   return (
     "You are an agricultural extension advisor for smallholder maize farmers " +
     `in Nigeria. A maize crop has been diagnosed with: ${diseaseName}. ` +
+    (cause ? `Cause: ${cause} ` : "") +
     `Typical symptoms: ${symptomsVisible || "typical symptoms for this disease"}. ` +
+    (treatmentNote ? `Extension guidance for this disease: ${treatmentNote} ` : "") +
     "Using current, reputable sources, recommend what a Nigerian farmer should " +
     "use to treat or manage this disease. Prefer options that are effective, " +
     "affordable, and actually available to smallholder farms in Nigeria. Do " +
     "not recommend any chemical that is banned or restricted in Nigeria.\n\n" +
-    "Respond with 2 to 4 lines, one recommendation per line, each formatted " +
-    "exactly as:\n" +
+    "If any chemical or biological product can help at all -- a fungicide, " +
+    "an insecticide against a disease-carrying insect vector, a seed " +
+    "treatment, or a biological control product -- you MUST include at " +
+    "least one line naming a specific active ingredient and example " +
+    "product(s) sold in Nigeria for it. Only skip product recommendations " +
+    "entirely if truly none exist and resistant varieties or cultural " +
+    "practices are the sole options (e.g. an untreatable viral infection " +
+    "with no vector to target).\n\n" +
+    "Respond with at least 2 and up to 4 lines, one recommendation per " +
+    "line, each formatted exactly as:\n" +
     "<active ingredient> (<example product name(s) sold in Nigeria>): " +
     "<brief application note, e.g. timing or method> || <manufacturer's " +
     "official website or official product page URL, or leave blank if none " +
@@ -101,7 +116,9 @@ async function callModel(model: string, prompt: string): Promise<TreatmentAdvice
 
 async function fetchAdvice(
   diseaseName: string,
-  symptomsVisible: string
+  cause: string,
+  symptomsVisible: string,
+  treatmentNote: string
 ): Promise<TreatmentAdvice> {
   if (!openRouterApiKey) {
     throw new Error("OpenRouter is not configured (OPENROUTER_API_KEY missing).");
@@ -110,7 +127,7 @@ async function fetchAdvice(
     throw new Error("No OpenRouter advisor models configured (OPENROUTER_ADVISOR_MODELS).");
   }
 
-  const prompt = buildPrompt(diseaseName, symptomsVisible);
+  const prompt = buildPrompt(diseaseName, cause, symptomsVisible, treatmentNote);
   const failures: string[] = [];
 
   for (const model of openRouterAdvisorModels) {
@@ -140,7 +157,9 @@ async function fetchAdvice(
 export async function getTreatmentAdvice(
   diseaseKey: string,
   diseaseName: string,
-  symptomsVisible: string
+  cause: string,
+  symptomsVisible: string,
+  treatmentNote: string
 ): Promise<TreatmentAdvice> {
   const cached = cache.get(diseaseKey);
   if (cached && cached.expiresAt > Date.now()) {
@@ -150,7 +169,7 @@ export async function getTreatmentAdvice(
   const inflight = pending.get(diseaseKey);
   if (inflight) return inflight;
 
-  const p = fetchAdvice(diseaseName, symptomsVisible)
+  const p = fetchAdvice(diseaseName, cause, symptomsVisible, treatmentNote)
     .then((advice) => {
       cache.set(diseaseKey, { advice, expiresAt: Date.now() + CACHE_TTL_MS });
       return advice;
