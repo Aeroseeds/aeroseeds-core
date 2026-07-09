@@ -68,6 +68,16 @@ export default function BatchPage() {
   const [error, setError] = useState<string | null>(null);
   const [response, setResponse] = useState<BatchResponse | null>(null);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const scrollFadeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleResultScroll(e: React.UIEvent<HTMLDivElement>) {
+    const el = e.currentTarget;
+    el.classList.add("is-scrolling");
+    if (scrollFadeTimeout.current) clearTimeout(scrollFadeTimeout.current);
+    scrollFadeTimeout.current = setTimeout(() => {
+      el.classList.remove("is-scrolling");
+    }, 700);
+  }
 
   const total = selected.length;
 
@@ -399,7 +409,7 @@ export default function BatchPage() {
                       {response.results[expandedIndex].diagnosis!.disease_name}
                     </p>
                   </div>
-                  <div className="result-body">
+                  <div className="result-body" onScroll={handleResultScroll}>
                     <div className="result-section">
                       <p className="result-label">Cause</p>
                       <p className="result-text">
@@ -434,7 +444,7 @@ export default function BatchPage() {
 
             {response.results[expandedIndex].status !== "success" && (
               <div className="result-panel">
-                <div className="result-body">
+                <div className="result-body" onScroll={handleResultScroll}>
                   <p className="result-text">{response.results[expandedIndex].message}</p>
                   {response.results[expandedIndex].status === "uncertain" &&
                     response.results[expandedIndex].observed && (

@@ -36,6 +36,16 @@ export default function ScanPage() {
   const [result, setResult] = useState<DiagnoseResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const scrollFadeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleResultScroll(e: React.UIEvent<HTMLDivElement>) {
+    const el = e.currentTarget;
+    el.classList.add("is-scrolling");
+    if (scrollFadeTimeout.current) clearTimeout(scrollFadeTimeout.current);
+    scrollFadeTimeout.current = setTimeout(() => {
+      el.classList.remove("is-scrolling");
+    }, 700);
+  }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0];
@@ -170,7 +180,7 @@ export default function ScanPage() {
               <div className="result-header">
                 <p className="result-disease">{result.diagnosis.disease_name}</p>
               </div>
-              <div className="result-body">
+              <div className="result-body" onScroll={handleResultScroll}>
                 <div className="result-section">
                   <p className="result-label">Cause</p>
                   <p className="result-text">{result.diagnosis.cause || "Not available."}</p>
@@ -197,7 +207,7 @@ export default function ScanPage() {
 
           {result && (result.status === "rejected" || result.status === "uncertain") && (
             <div className="result-panel">
-              <div className="result-body">
+              <div className="result-body" onScroll={handleResultScroll}>
                 <p className="result-text">{result.message}</p>
                 {result.status === "uncertain" && result.observed && (
                   <p className="notice-secondary">{result.observed}</p>

@@ -324,7 +324,7 @@ button {
   display: grid;
   grid-template-columns: 1fr;
   gap: 24px;
-  align-items: stretch;
+  align-items: start;
 }
 
 @media (min-width: 860px) {
@@ -338,7 +338,9 @@ button {
   overflow: hidden;
   border: 1px solid var(--panel-border);
   background: #000;
-  min-height: 320px;
+  width: 100%;
+  aspect-ratio: 1;
+  align-self: start;
 }
 
 .scan-image-panel img {
@@ -353,11 +355,15 @@ button {
   border: 1px solid var(--panel-border);
   background: var(--panel);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 520px;
 }
 
 .result-header {
   padding: 20px 24px;
   border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
 }
 
 .result-disease {
@@ -370,6 +376,35 @@ button {
 
 .result-body {
   padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+
+  /* Custom scrollbar: thin, dim, hidden until actively scrolling */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.result-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.result-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.result-body::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 999px;
+  transition: background-color 0.4s ease;
+}
+
+.result-body.is-scrolling {
+  scrollbar-color: rgba(168, 168, 162, 0.35) transparent;
+}
+
+.result-body.is-scrolling::-webkit-scrollbar-thumb {
+  background-color: rgba(168, 168, 162, 0.35);
 }
 
 .result-section {
