@@ -29,7 +29,15 @@ export const openRouterAdvisorModels: string[] = process.env.OPENROUTER_ADVISOR_
 export const confidenceThreshold = process.env.CONFIDENCE_THRESHOLD
   ? Number(process.env.CONFIDENCE_THRESHOLD)
   : 0.65;
-export const maxBatchImages = 200;
+export const maxBatchImages = process.env.MAX_BATCH_IMAGES
+  ? Number(process.env.MAX_BATCH_IMAGES)
+  : 1000;
+export const maxBatchFileSizeBytes = process.env.BATCH_MAX_FILE_SIZE_MB
+  ? Number(process.env.BATCH_MAX_FILE_SIZE_MB) * 1024 * 1024
+  : 20 * 1024 * 1024;
 export const batchConcurrency = process.env.BATCH_CONCURRENCY
   ? Number(process.env.BATCH_CONCURRENCY)
   : 6;
+export const batchJobTtlMs = process.env.BATCH_JOB_TTL_MINUTES
+  ? Number(process.env.BATCH_JOB_TTL_MINUTES) * 60 * 1000
+  : 30 * 60 * 1000;

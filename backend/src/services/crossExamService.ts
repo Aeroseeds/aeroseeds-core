@@ -1,5 +1,6 @@
 import axios from "axios";
 import { openRouterApiKey, openRouterVisionModels } from "../config";
+import { withRateLimitRetry } from "../utils/openRouterRetry";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const REQUEST_TIMEOUT_MS = 10000;
@@ -95,7 +96,7 @@ export async function crossExamineDiagnosis(
 
   for (const model of openRouterVisionModels) {
     try {
-      const result = await callModel(model, dataUrl, prompt);
+      const result = await withRateLimitRetry(() => callModel(model, dataUrl, prompt));
       console.info(`Cross-exam: "${model}" answered the request (verdict: ${result.verdict}).`);
       return result;
     } catch (err: any) {

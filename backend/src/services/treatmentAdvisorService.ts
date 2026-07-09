@@ -1,5 +1,6 @@
 import axios from "axios";
 import { openRouterApiKey, openRouterAdvisorModels } from "../config";
+import { withRateLimitRetry } from "../utils/openRouterRetry";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const REQUEST_TIMEOUT_MS = 25000;
@@ -132,7 +133,7 @@ async function fetchAdvice(
 
   for (const model of openRouterAdvisorModels) {
     try {
-      const advice = await callModel(model, prompt);
+      const advice = await withRateLimitRetry(() => callModel(model, prompt));
       console.info(`Treatment advisor: "${model}" answered (${advice.recommendations.length} recommendations).`);
       return advice;
     } catch (err: any) {

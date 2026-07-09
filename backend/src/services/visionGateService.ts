@@ -1,5 +1,6 @@
 import axios from "axios";
 import { openRouterApiKey, openRouterVisionModels } from "../config";
+import { withRateLimitRetry } from "../utils/openRouterRetry";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const REQUEST_TIMEOUT_MS = 10000;
@@ -73,7 +74,7 @@ export async function checkImageQuality(
 
   for (const model of openRouterVisionModels) {
     try {
-      const verdict = await callModel(model, dataUrl);
+      const verdict = await withRateLimitRetry(() => callModel(model, dataUrl));
       console.info(`Vision gate: "${model}" answered the request (verdict: ${verdict}).`);
       return verdict;
     } catch (err: any) {

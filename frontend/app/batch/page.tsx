@@ -59,7 +59,6 @@ function statusLabel(item: BatchResultItem): string {
 export default function BatchPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
-  const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [selected, setSelected] = useState<SelectedImage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -105,18 +104,31 @@ export default function BatchPage() {
     setError(null);
   }
 
-  function startFakeProgress(count: number) {
-    setProcessedCount(0);
-    const stepMs = Math.min(2000, Math.max(300, Math.round(15000 / count)));
-    progressTimer.current = setInterval(() => {
-      setProcessedCount((prev) => (prev < count - 1 ? prev + 1 : prev));
-    }, stepMs);
-  }
+  const POLL_INTERVAL_MS = 1500;
+  const POLL_TIMEOUT_MS = 40 * 60 * 1000; // matches the backend's job TTL, plus margin
 
-  function stopFakeProgress() {
-    if (progressTimer.current) {
-      clearInterval(progressTimer.current);
-      progressTimer.current = null;
+  async function pollBatchJob(jobId: string): Promise<BatchResponse> {
+    const startedAt = Date.now();
+
+    while (true) {
+      if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
+        throw new Error("This batch is taking too long to check on. Please try again.");
+      }
+
+      const res = await fetch(`${BACKEND_URL}/diagnose-batch/${jobId}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Lost track of the batch job.");
+      }
+
+      setProcessedCount(data.processed ?? 0);
+
+      if (data.status === "done") {
+        return data as BatchResponse;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
     }
   }
 
@@ -127,31 +139,30 @@ export default function BatchPage() {
     setError(null);
     setResponse(null);
     setExpandedIndex(null);
-    startFakeProgress(selected.length);
+    setProcessedCount(0);
 
     try {
       const formData = new FormData();
       selected.forEach((s) => formData.append("images", s.file));
 
-      const res = await fetch(`${BACKEND_URL}/diagnose-batch`, {
+      const startRes = await fetch(`${BACKEND_URL}/diagnose-batch`, {
         method: "POST",
         body: formData,
       });
 
-      const data = await res.json();
+      const startData = await startRes.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || "Batch diagnosis failed.");
+      if (!startRes.ok) {
+        throw new Error(startData.error || "Batch diagnosis failed.");
       }
 
-      setProcessedCount(selected.length);
+      const data = await pollBatchJob(startData.job_id);
       setResponse(data);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Something went wrong. Please try again.";
       setError(message);
     } finally {
-      stopFakeProgress();
       setLoading(false);
     }
   }
@@ -200,7 +211,7 @@ export default function BatchPage() {
         <div className="upload-dropzone" onClick={() => fileInputRef.current?.click()}>
           <div className="upload-icon">+</div>
           <p className="upload-title">Select images</p>
-          <p className="upload-hint">Choose multiple images (up to 200 per batch)</p>
+          <p className="upload-hint">Choose multiple images (up to 1000 per batch)</p>
           <button
             type="button"
             className="batch-folder-button"

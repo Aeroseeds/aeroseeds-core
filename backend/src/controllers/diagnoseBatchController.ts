@@ -6,6 +6,12 @@ import {
 } from "../services/diagnosisPipeline";
 import { runWithConcurrency } from "../utils/concurrency";
 import { batchConcurrency } from "../config";
+import {
+  createBatchJob,
+  getBatchJob,
+  incrementBatchJobProgress,
+  markBatchJobDone,
+} from "../services/batchJobStore";
 
 type BatchStatus = "success" | "uncertain" | "rejected";
 
@@ -64,15 +70,44 @@ function toProcessedFile(filename: string, result: PipelineResult): ProcessedFil
   }
 }
 
-export async function diagnoseBatch(req: Request, res: Response) {
+interface BatchResponseBody {
+  summary: {
+    total_images: number;
+    rejected_images: number;
+    diagnosed_images: number;
+    by_status: { success: number; uncertain: number };
+    by_disease: Record<DiseaseKey, number>;
+    dominant_finding: string;
+  };
+  results: BatchResultItem[];
+}
+
+/**
+ * Kicks off batch processing and returns a job id immediately -- with
+ * batches of up to a few hundred images, each needing one or more
+ * OpenRouter calls, the full run can take minutes, well past what any
+ * reverse proxy or browser will hold a single request open for. The client
+ * polls GET /diagnose-batch/:jobId for progress and the final result.
+ */
+export async function startDiagnoseBatch(req: Request, res: Response) {
   const files = req.files as Express.Multer.File[] | undefined;
 
   if (!files || files.length === 0) {
     return res.status(400).json({ error: "No image files uploaded." });
   }
 
+  const job = createBatchJob<BatchResponseBody>(files.length);
+  res.status(202).json({ job_id: job.id, total: files.length });
+
+  processBatch(job.id, files).catch((err: any) => {
+    console.error(`Batch job ${job.id} failed unexpectedly:`, err.message);
+  });
+}
+
+async function processBatch(jobId: string, files: Express.Multer.File[]): Promise<void> {
   const processed = await runWithConcurrency(files, batchConcurrency, async (file) => {
     const result = await runDiagnosisPipeline(file.buffer, file.originalname, file.mimetype);
+    incrementBatchJobProgress(jobId);
     return toProcessedFile(file.originalname, result);
   });
 
@@ -114,7 +149,7 @@ export async function diagnoseBatch(req: Request, res: Response) {
     if (topKey) dominantFinding = topKey;
   }
 
-  return res.json({
+  markBatchJobDone<BatchResponseBody>(jobId, {
     summary: {
       total_images: files.length,
       rejected_images: rejectedCount,
@@ -124,5 +159,28 @@ export async function diagnoseBatch(req: Request, res: Response) {
       dominant_finding: dominantFinding,
     },
     results: processed.map((p) => p.item),
+  });
+}
+
+export function getDiagnoseBatchStatus(req: Request, res: Response) {
+  const job = getBatchJob(req.params.jobId);
+
+  if (!job) {
+    return res.status(404).json({ error: "Batch job not found or expired." });
+  }
+
+  if (job.status === "processing") {
+    return res.json({
+      status: "processing",
+      total: job.total,
+      processed: job.processedCount,
+    });
+  }
+
+  return res.json({
+    status: "done",
+    total: job.total,
+    processed: job.processedCount,
+    ...job.result,
   });
 }
