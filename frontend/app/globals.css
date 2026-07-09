@@ -325,11 +325,13 @@ button {
   grid-template-columns: 1fr;
   gap: 24px;
   align-items: start;
+  --card-height: 340px;
 }
 
 @media (min-width: 860px) {
   .scan-results {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    --card-height: 520px;
   }
 }
 
@@ -339,8 +341,7 @@ button {
   border: 1px solid var(--panel-border);
   background: #000;
   width: 100%;
-  aspect-ratio: 1;
-  align-self: start;
+  height: var(--card-height);
 }
 
 .scan-image-panel img {
@@ -357,7 +358,7 @@ button {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  max-height: 520px;
+  height: var(--card-height);
 }
 
 .result-header {
@@ -820,17 +821,15 @@ button {
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
-  align-items: stretch;
+  align-items: start;
+  --card-height: 300px;
 }
 
 @media (min-width: 860px) {
   .batch-modal {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    --card-height: 460px;
   }
-}
-
-.batch-modal-image {
-  min-height: 240px;
 }
 
 .batch-modal-close {
