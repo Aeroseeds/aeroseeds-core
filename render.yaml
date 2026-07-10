@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: aeroseeds-backend
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: INFERENCE_SERVICE_URL
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+
+  - type: web
+    name: aeroseeds-inference
+    runtime: docker
+    rootDir: inference-service
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: PORT
+        value: 10000
