@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from PIL import Image
+from starlette.concurrency import run_in_threadpool
 from torchvision import transforms
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -94,15 +95,18 @@ async def predict(file: UploadFile = File(...)):
     except Exception:
         raise HTTPException(status_code=400, detail="Could not read uploaded image.")
 
-    input_tensor = TRANSFORM(image).unsqueeze(0).to(DEVICE)
+    def run_inference():
+        input_tensor = TRANSFORM(image).unsqueeze(0).to(DEVICE)
+        with torch.no_grad():
+            outputs = state["model"](input_tensor)
+            probabilities = torch.softmax(outputs, dim=1)[0]
+            predicted_idx = torch.argmax(probabilities)
+            confidence = probabilities[predicted_idx].item()
+        return predicted_idx.item(), confidence
 
-    with torch.no_grad():
-        outputs = state["model"](input_tensor)
-        probabilities = torch.softmax(outputs, dim=1)[0]
-        predicted_idx = torch.argmax(probabilities)
-        confidence = probabilities[predicted_idx].item()
+    predicted_idx, confidence = await run_in_threadpool(run_inference)
 
-    predicted_class = state["class_names"][predicted_idx.item()]
+    predicted_class = state["class_names"][predicted_idx]
     disease_info = state["disease_lookup"].get(predicted_class, {})
 
     return {
