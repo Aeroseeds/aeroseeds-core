@@ -14,8 +14,9 @@ export interface DiagnosisResult {
 
 // Render's free tier spins the inference container down after ~15 min idle;
 // the first request after that hits it mid-boot and gets a non-JSON error
-// page instead of a response. Retrying gives the ~50s cold start time to finish.
-const COLD_START_RETRY_DELAYS_MS = [5000, 10000, 15000, 20000];
+// page instead of a response. Measured cold starts run ~55s with variance,
+// so the retry budget needs real headroom past that, not just past the average.
+const COLD_START_RETRY_DELAYS_MS = [5000, 10000, 15000, 20000, 25000, 30000];
 
 function isColdStartFailure(err: any): boolean {
   const status = err.response?.status;
