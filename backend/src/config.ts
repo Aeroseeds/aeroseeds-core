@@ -1,4 +1,5 @@
 import "dotenv/config";
+import path from "path";
 
 const DEFAULT_VISION_MODELS = [
   "google/gemini-2.5-flash",
@@ -41,3 +42,13 @@ export const batchConcurrency = process.env.BATCH_CONCURRENCY
 export const batchJobTtlMs = process.env.BATCH_JOB_TTL_MINUTES
   ? Number(process.env.BATCH_JOB_TTL_MINUTES) * 60 * 1000
   : 30 * 60 * 1000;
+export const databaseUrl = process.env.DATABASE_URL || "";
+export const directDatabaseUrl = process.env.DIRECT_URL || "";
+export const letterheadImagePath =
+  process.env.LETTERHEAD_IMAGE_PATH ||
+  path.join(__dirname, "..", "assets", "aeroseeds-logo.png");
+export const reportCompanyName = process.env.REPORT_COMPANY_NAME || "Aeroseeds";
+export const reportCompanyAddress = process.env.REPORT_COMPANY_ADDRESS || "Lagos, Nigeria";
+export const reportCompanyPhone = process.env.REPORT_COMPANY_PHONE || "+234 816 978 1059";
+export const reportCompanyEmail = process.env.REPORT_COMPANY_EMAIL || "plant@aeroseeds.io";
+export const reportCompanyWebsite = process.env.REPORT_COMPANY_WEBSITE || "www.aeroseeds.io";
