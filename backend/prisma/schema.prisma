@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Farm {
+  id        String   @id @default(uuid())
+  name      String
+  location  String?
+  sizeHa    Float?   @map("size_ha")
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  scans     Scan[]
+
+  @@map("farms")
+}
+
+enum ScanMode {
+  single
+  batch
+}
+
+enum ScanStatus {
+  processing
+  done
+  failed
+}
+
+enum ScanResultStatus {
+  success
+  uncertain
+  rejected
+}
+
+model Scan {
+  id              String       @id @default(uuid())
+  farmId          String?      @map("farm_id")
+  farm            Farm?        @relation(fields: [farmId], references: [id], onDelete: SetNull)
+  mode            ScanMode
+  status          ScanStatus   @default(processing)
+  totalImages     Int          @map("total_images")
+  diagnosedCount  Int          @default(0) @map("diagnosed_count")
+  rejectedCount   Int          @default(0) @map("rejected_count")
+  uncertainCount  Int          @default(0) @map("uncertain_count")
+  dominantFinding String?      @map("dominant_finding")
+  byDisease       Json?        @map("by_disease")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  completedAt     DateTime?    @map("completed_at")
+  results         ScanResult[]
+
+  @@index([farmId])
+  @@index([createdAt])
+  @@map("scans")
+}
+
+model ScanResult {
+  id              String            @id @default(uuid())
+  scanId          String            @map("scan_id")
+  scan            Scan              @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  filename        String
+  status          ScanResultStatus
+  diseaseName     String?           @map("disease_name")
+  predictedClass  String?           @map("predicted_class")
+  cause           String?
+  symptoms        String?
+  treatment       String?
+  prevention      String?
+  recommendations Json?
+  message         String?
+  observed        String?
+  createdAt       DateTime          @default(now()) @map("created_at")
+
+  @@index([scanId])
+  @@map("scan_results")
+}

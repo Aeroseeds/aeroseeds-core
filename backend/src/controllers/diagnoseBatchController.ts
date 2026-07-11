@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { Prisma } from "@prisma/client";
 import {
   runDiagnosisPipeline,
   PipelineResult,
@@ -12,6 +13,11 @@ import {
   incrementBatchJobProgress,
   markBatchJobDone,
 } from "../services/batchJobStore";
+import {
+  createScanRecord,
+  appendScanResult,
+  completeScanRecord,
+} from "../services/scanPersistenceService";
 
 type BatchStatus = "success" | "uncertain" | "rejected";
 
@@ -70,7 +76,28 @@ function toProcessedFile(filename: string, result: PipelineResult): ProcessedFil
   }
 }
 
+function persistBatchResult(scanId: string, processed: ProcessedFile): void {
+  const { item, predictedClass } = processed;
+  appendScanResult(scanId, {
+    filename: item.filename,
+    status: item.status,
+    diseaseName: item.diagnosis?.disease_name ?? null,
+    predictedClass: predictedClass ?? null,
+    cause: item.diagnosis?.cause ?? null,
+    symptoms: item.diagnosis?.symptoms ?? null,
+    treatment: item.diagnosis?.treatment ?? null,
+    prevention: item.diagnosis?.prevention ?? null,
+    recommendations:
+      (item.diagnosis?.recommendations as unknown as Prisma.InputJsonValue) ?? null,
+    message: item.message,
+    observed: item.observed ?? null,
+  }).catch((err: any) => {
+    console.error(`Failed to persist scan result for scan ${scanId}:`, err.message);
+  });
+}
+
 interface BatchResponseBody {
+  scan_id: string | null;
   summary: {
     total_images: number;
     rejected_images: number;
@@ -97,18 +124,33 @@ export async function startDiagnoseBatch(req: Request, res: Response) {
   }
 
   const job = createBatchJob<BatchResponseBody>(files.length);
-  res.status(202).json({ job_id: job.id, total: files.length });
 
-  processBatch(job.id, files).catch((err: any) => {
+  let scanId: string | null = null;
+  try {
+    const scan = await createScanRecord({ mode: "batch", totalImages: files.length });
+    scanId = scan.id;
+  } catch (err: any) {
+    console.error("Failed to create scan record for batch:", err.message);
+  }
+
+  res.status(202).json({ job_id: job.id, total: files.length, scan_id: scanId });
+
+  processBatch(job.id, scanId, files).catch((err: any) => {
     console.error(`Batch job ${job.id} failed unexpectedly:`, err.message);
   });
 }
 
-async function processBatch(jobId: string, files: Express.Multer.File[]): Promise<void> {
+async function processBatch(
+  jobId: string,
+  scanId: string | null,
+  files: Express.Multer.File[]
+): Promise<void> {
   const processed = await runWithConcurrency(files, batchConcurrency, async (file) => {
     const result = await runDiagnosisPipeline(file.buffer, file.originalname, file.mimetype);
     incrementBatchJobProgress(jobId);
-    return toProcessedFile(file.originalname, result);
+    const p = toProcessedFile(file.originalname, result);
+    if (scanId) persistBatchResult(scanId, p);
+    return p;
   });
 
   const byDisease: Record<DiseaseKey, number> = {
@@ -150,6 +192,7 @@ async function processBatch(jobId: string, files: Express.Multer.File[]): Promis
   }
 
   markBatchJobDone<BatchResponseBody>(jobId, {
+    scan_id: scanId,
     summary: {
       total_images: files.length,
       rejected_images: rejectedCount,
@@ -160,6 +203,20 @@ async function processBatch(jobId: string, files: Express.Multer.File[]): Promis
     },
     results: processed.map((p) => p.item),
   });
+
+  if (scanId) {
+    try {
+      await completeScanRecord(scanId, {
+        diagnosedCount: successCount + uncertainCount,
+        rejectedCount,
+        uncertainCount,
+        byDisease,
+        dominantFinding,
+      });
+    } catch (err: any) {
+      console.error(`Failed to complete scan record ${scanId}:`, err.message);
+    }
+  }
 }
 
 export function getDiagnoseBatchStatus(req: Request, res: Response) {

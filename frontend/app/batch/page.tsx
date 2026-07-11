@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useMemo, useRef, useState } from "react";
 import Recommendations from "../Recommendations";
+import ScanActions from "../components/ScanActions";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
@@ -41,6 +43,7 @@ interface BatchSummary {
 }
 
 interface BatchResponse {
+  scan_id?: string | null;
   summary: BatchSummary;
   results: BatchResultItem[];
 }
@@ -57,6 +60,16 @@ function statusLabel(item: BatchResultItem): string {
 }
 
 export default function BatchPage() {
+  return (
+    <Suspense fallback={null}>
+      <BatchPageInner />
+    </Suspense>
+  );
+}
+
+function BatchPageInner() {
+  const searchParams = useSearchParams();
+  const farmIdParam = searchParams.get("farm_id");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
@@ -374,6 +387,12 @@ export default function BatchPage() {
               </button>
             ))}
           </div>
+
+          {response.scan_id && (
+            <div className="scan-actions-wrap">
+              <ScanActions scanId={response.scan_id} preselectedFarmId={farmIdParam} />
+            </div>
+          )}
 
           <div className="scan-actions">
             <button

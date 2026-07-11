@@ -8,21 +8,28 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts"
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "postinstall": "prisma generate",
+    "db:migrate": "prisma migrate deploy"
   },
   "dependencies": {
+    "@prisma/client": "^6.1.0",
+    "@sparticuz/chromium": "^149.0.0",
     "axios": "^1.7.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "form-data": "^4.0.0",
-    "multer": "^2.0.1"
+    "multer": "^2.0.1",
+    "puppeteer-core": "^25.3.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^4.17.25",
     "@types/multer": "^2.2.0",
     "@types/node": "^26.1.0",
+    "prisma": "^6.1.0",
+    "puppeteer": "^25.3.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^6.0.3"
   }

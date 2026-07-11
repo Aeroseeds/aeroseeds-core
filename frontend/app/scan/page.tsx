@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useRef, useState } from "react";
 import Recommendations from "../Recommendations";
+import ScanActions from "../components/ScanActions";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
@@ -26,9 +28,20 @@ interface DiagnoseResponse {
   message?: string;
   diagnosis?: Diagnosis;
   observed?: string;
+  scan_id?: string | null;
 }
 
 export default function ScanPage() {
+  return (
+    <Suspense fallback={null}>
+      <ScanPageInner />
+    </Suspense>
+  );
+}
+
+function ScanPageInner() {
+  const searchParams = useSearchParams();
+  const farmIdParam = searchParams.get("farm_id");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -211,6 +224,12 @@ export default function ScanPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {result && result.scan_id && (
+        <div className="scan-actions-wrap">
+          <ScanActions scanId={result.scan_id} preselectedFarmId={farmIdParam} />
         </div>
       )}
     </main>
