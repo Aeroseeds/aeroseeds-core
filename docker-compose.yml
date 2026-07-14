@@ -1,0 +1,45 @@
+services:
+  inference:
+    build:
+      context: ./inference-service
+    restart: always
+    environment:
+      PORT: 8000
+    networks:
+      - aeroseeds
+    # Not published to the host on purpose -- only the backend talks to it,
+    # over the internal Docker network below.
+
+  backend:
+    build:
+      context: ./backend
+    restart: always
+    depends_on:
+      - inference
+    env_file:
+      - ./backend/.env
+    environment:
+      PORT: 4000
+      INFERENCE_SERVICE_URL: http://inference:8000
+    networks:
+      - aeroseeds
+    ports:
+      # Bound to localhost only; Nginx reverse-proxies to it publicly. See GUIDE.md.
+      - "127.0.0.1:4000:4000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_BACKEND_URL: https://api.thanos.aeroseeds.io
+    restart: always
+    depends_on:
+      - backend
+    networks:
+      - aeroseeds
+    ports:
+      - "127.0.0.1:3000:3000"
+
+networks:
+  aeroseeds:
+    driver: bridge

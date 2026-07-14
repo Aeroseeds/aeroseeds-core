@@ -22,5 +22,6 @@ frontend/*.tsbuildinfo
 .DS_Store
 Thumbs.db
 
-# Claude Code local runtime state
+# Local AI agent runtime state
 .claude/scheduled_tasks.lock
+.diverse/

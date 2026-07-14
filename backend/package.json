@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",
-    "@sparticuz/chromium": "^149.0.0",
     "axios": "^1.7.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

@@ -32,9 +32,8 @@ Scans can optionally be attached to a farm at upload time, or assigned afterward
 - Python 3.10+
 - Node.js 18+
 - A Postgres database (the project is built against [Supabase](https://supabase.com/))
-- `convnext_tiny_best.pt` — place it at `inference-service/model/convnext_tiny_best.pt`
-- `class_names.json` — place it at `inference-service/class_names.json` (a placeholder is already there; replace it with your real one)
-- `disease_lookup.json` — a placeholder with stub cause/treatment/prevention text is already at `inference-service/disease_lookup.json`. Replace its contents once real content is sourced. Keys must match the class names in `class_names.json`.
+- `convnext_tiny_best.pt` — place it at `inference-service/model/convnext_tiny_best.pt` (the checkpoint includes the class names)
+- `disease_lookup.json` — a placeholder with stub cause/treatment/prevention text is already at `inference-service/disease_lookup.json`. Replace its contents once real content is sourced. Keys must match the class names stored in the model checkpoint.
 
 ## 2. Install dependencies
 
@@ -166,7 +165,7 @@ Restart `npm run dev` in `frontend/` after changing this file (Next.js only read
 
 ## Deployment
 
-`render.yaml` deploys the backend (Node, runs `prisma migrate deploy` on build) and the inference service (Docker) as two Render web services. The frontend isn't included there; deploy it separately (e.g. Vercel) and point `NEXT_PUBLIC_BACKEND_URL` at the deployed backend.
+The app runs on our own server (VPS) as three Docker containers, defined in `docker-compose.yml`, behind Nginx at `thanos.aeroseeds.io` (frontend) and `api.thanos.aeroseeds.io` (backend). See **[GUIDE.md](GUIDE.md)** for the full plain-language walkthrough of the setup and how to deploy.
 
 ## Notes
 

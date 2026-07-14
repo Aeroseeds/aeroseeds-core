@@ -15,26 +15,18 @@ import { renderScanReportHtml } from "../templates/scanReport.html";
 import { renderFarmReportHtml } from "../templates/farmReport.html";
 import { escapeHtml } from "../templates/escapeHtml";
 
-// @sparticuz/chromium ships a statically-linked Linux Chromium build, which
-// is what Render's `runtime: node` web service needs (it has no system
-// Chrome/libs, unlike a Docker runtime). On non-Linux dev machines that
-// binary doesn't run, so we fall back to full `puppeteer`, which bundles its
-// own Chromium for the local platform. Swap this for the sparticuz path
-// everywhere if the backend ever moves to `runtime: docker`.
-//
-// Launching Chromium (extracting the sparticuz binary, then booting it) takes
-// several seconds, and used to happen on every single report download. It's
-// kept running as a singleton instead and reused across requests -- only the
-// page is created/torn down per report.
+// In Docker, PUPPETEER_EXECUTABLE_PATH points at the image's apt-installed
+// Chromium; on dev machines the full `puppeteer` package supplies its own.
+// Chromium takes seconds to boot, so one browser is kept alive and shared
+// across requests -- only the page is created/torn down per report.
 let browserPromise: Promise<Browser> | null = null;
 
 async function launchBrowser(): Promise<Browser> {
-  if (process.platform === "linux") {
-    const chromium = (await import("@sparticuz/chromium")).default;
+  if (process.env.PUPPETEER_EXECUTABLE_PATH) {
     const puppeteer = await import("puppeteer-core");
     return puppeteer.launch({
-      args: chromium.args,
-      executablePath: await chromium.executablePath(),
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
       headless: true,
     });
   }
