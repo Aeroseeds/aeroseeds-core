@@ -1,6 +1,6 @@
 import axios from "axios";
 import FormData from "form-data";
-import { inferenceServiceUrl } from "../config";
+import { inferenceServiceUrl, inferenceTimeoutMs } from "../config";
 
 export interface DiagnosisResult {
   predicted_class: string;
@@ -12,13 +12,12 @@ export interface DiagnosisResult {
   confidence?: number;
 }
 
-// Render's free tier spins the inference container down after ~15 min idle;
-// the first request after that hits it mid-boot and gets a non-JSON error
-// page instead of a response. Measured cold starts run ~55s with variance,
-// so the retry budget needs real headroom past that, not just past the average.
-const COLD_START_RETRY_DELAYS_MS = [5000, 10000, 15000, 20000, 25000, 30000];
+// If the inference container is restarting (deploy, crash recovery), requests
+// hit it mid-boot while the model is still loading. Retry with backoff instead
+// of failing the user's scan.
+const RETRY_DELAYS_MS = [5000, 15000, 30000];
 
-function isColdStartFailure(err: any): boolean {
+function isServiceUnavailable(err: any): boolean {
   const status = err.response?.status;
   return !err.response || status === 502 || status === 503;
 }
@@ -45,12 +44,13 @@ export async function diagnoseImage(
         form,
         {
           headers: form.getHeaders(),
+          timeout: inferenceTimeoutMs,
         }
       );
       return response.data;
     } catch (err: any) {
-      const delay = COLD_START_RETRY_DELAYS_MS[attempt];
-      if (!delay || !isColdStartFailure(err)) {
+      const delay = RETRY_DELAYS_MS[attempt];
+      if (!delay || !isServiceUnavailable(err)) {
         throw err;
       }
       await sleep(delay);

@@ -20,6 +20,9 @@ const DEFAULT_ADVISOR_MODELS = [
 export const port = process.env.PORT ? Number(process.env.PORT) : 4000;
 export const inferenceServiceUrl =
   process.env.INFERENCE_SERVICE_URL || "http://localhost:8000";
+export const inferenceTimeoutMs = process.env.INFERENCE_TIMEOUT_MS
+  ? Number(process.env.INFERENCE_TIMEOUT_MS)
+  : 90000;
 export const openRouterApiKey = process.env.OPENROUTER_API_KEY || "";
 export const openRouterVisionModels: string[] = process.env.OPENROUTER_VISION_MODELS
   ? process.env.OPENROUTER_VISION_MODELS.split(",").map((m) => m.trim()).filter(Boolean)
